@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estimador de estancia hospitalaria · Clínica de rehabilitación</title>
+<meta name="description" content="Estimador de días de hospitalización según sesiones de fisioterapia y severidad al ingreso. Modelo lineal · Universidad de Manizales.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* paleta médica moderna */
+    --primary:#0F2B4C;            /* azul profundo */
+    --primary-2:#1E4976;          /* azul medio */
+    --primary-light:#2E6BA8;
+    --sky-1:#8DA9C4;              /* azul cielo medio */
+    --sky-2:#A8C4D6;              /* azul cielo claro */
+    --sky-3:#D9E6F0;              /* azul muy claro */
+    --sky-bg:#EAF2F8;             /* fondo azul hielo */
+    --hero-grad:linear-gradient(135deg, #6B8AA8 0%, #8DA9C4 45%, #A8C4D6 100%);
+    --white:#FFFFFF;
+    --ink:#0F2B4C;
+    --body:#3D5168;
+    --muted:#6B7C90;
+    --line:#E2E8F0;
+    --bg:#F6F9FC;
+    --card:#FFFFFF;
+    --teal:#0E7C7B;
+    --teal-soft:#E6F3F3;
+    --verde:#2F7D4F;
+    --rojo:#A8402F;
+    --rojo-soft:#FBEFEC;
+    --ambar:#C9772B;
+    --ambar-soft:#FDF4EA;
+    --tabla:#0F2B4C;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin:0; background:var(--bg); color:var(--body);
+    font-family:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased; }
+  code { font-family:ui-monospace, Menlo, Consolas, monospace; font-size:13px; background:#EAF2F8; color:var(--primary); padding:2px 7px; border-radius:5px; }
+  a { color:var(--primary); text-decoration:none; }
+
+  .envoltura { max-width:1280px; margin:0 auto; padding:0 32px; }
+
+  /* ===== header / nav ===== */
+  .topbar { position:sticky; top:0; z-index:50; background:rgba(255,255,255,.92); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  .topbar .envoltura { display:flex; align-items:center; justify-content:space-between; padding-top:14px; padding-bottom:14px; }
+  .brand { display:flex; align-items:center; gap:11px; color:var(--primary); font-weight:800; font-size:21px; letter-spacing:-.02em; }
+  .brand-mark { width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(15,43,76,.25); }
+  .brand-mark svg { width:22px; height:22px; stroke:#fff; fill:none; stroke-width:2.2; }
+  .nav { display:flex; gap:30px; align-items:center; }
+  .nav a { color:var(--body); font-weight:500; font-size:15px; transition:color .2s; }
+  .nav a:hover { color:var(--primary); }
+  .top-actions { display:flex; gap:18px; align-items:center; }
+  .top-phone { display:flex; gap:9px; align-items:center; color:var(--primary); font-weight:600; font-size:14px; }
+  .top-phone svg { width:18px; height:18px; stroke:var(--primary); fill:none; stroke-width:2; }
+  .btn-primary { background:var(--primary); color:#fff; border:0; border-radius:8px; padding:11px 24px; font:inherit; font-weight:600; font-size:14px; cursor:pointer; box-shadow:0 4px 14px rgba(15,43,76,.25); transition:all .25s; }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(15,43,76,.35); background:var(--primary-2); }
+
+  /* ===== hero ===== */
+  .hero { position:relative; background:var(--hero-grad); color:#fff; overflow:hidden; padding:64px 0 84px; }
+  .hero::before { content:""; position:absolute; width:520px; height:520px; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 70%); filter:blur(50px); top:-120px; right:-80px; pointer-events:none; }
+  .hero::after { content:""; position:absolute; width:380px; height:380px; border-radius:50%; background:radial-gradient(circle, rgba(15,43,76,.18) 0%, rgba(15,43,76,0) 70%); filter:blur(60px); bottom:-100px; left:-60px; pointer-events:none; }
+  .hero .envoltura { position:relative; z-index:1; display:grid; grid-template-columns:1.05fr 1fr; gap:48px; align-items:center; }
+  .hero-badge { display:inline-flex; align-items:center; gap:10px; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.32); border-radius:999px; padding:7px 18px 7px 9px; font-size:13px; font-weight:500; letter-spacing:.02em; margin-bottom:24px; backdrop-filter:blur(8px); }
+  .hero-badge .dot { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg, #fff 0%, #D9E6F0 100%); display:inline-flex; align-items:center; justify-content:center; }
+  .hero-badge .dot svg { width:14px; height:14px; stroke:var(--primary); fill:none; stroke-width:2.5; }
+  .hero h1 { font-size:clamp(36px, 5.4vw, 64px); line-height:1.05; font-weight:800; letter-spacing:-.025em; margin:0 0 20px; color:#fff; }
+  .hero h1 .accent { color:#FFE9A8; }
+  .hero .lead { font-size:18px; line-height:1.7; color:rgba(255,255,255,.92); max-width:520px; margin:0 0 32px; }
+  .hero-cta { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .btn-hero { background:var(--primary); color:#fff; border:0; border-radius:8px; padding:15px 30px; font:inherit; font-weight:600; font-size:15px; cursor:pointer; box-shadow:0 8px 24px rgba(15,43,76,.35); transition:all .25s; text-decoration:none; display:inline-flex; align-items:center; gap:9px; }
+  .btn-hero:hover { transform:translateY(-2px); box-shadow:0 12px 30px rgba(15,43,76,.45); }
+  .btn-ghost { background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.4); border-radius:8px; padding:14px 26px; font:inherit; font-weight:600; font-size:15px; cursor:pointer; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center; gap:9px; }
+  .btn-ghost:hover { background:rgba(255,255,255,.28); }
+
+  /* hero panel derecho: visual abstracto, sin personas */
+  .hero-panel { position:relative; height:430px; display:flex; align-items:center; justify-content:center; }
+  .hero-panel .blob { position:absolute; width:340px; height:340px; border-radius:42% 58% 57% 43% / 47% 47% 53% 53%; background:linear-gradient(135deg, rgba(255,255,255,.28), rgba(255,255,255,.08)); backdrop-filter:blur(6px); box-shadow:0 30px 80px rgba(15,43,76,.18); }
+  .hero-panel .ring { position:absolute; border:1.5px solid rgba(255,255,255,.45); border-radius:50%; }
+  .hero-panel .ring.r1 { width:380px; height:380px; }
+  .hero-panel .ring.r2 { width:300px; height:300px; border-style:dashed; opacity:.6; }
+  .hero-panel .card-float { position:absolute; background:#fff; color:var(--ink); border-radius:14px; padding:16px 20px; box-shadow:0 20px 60px rgba(15,43,76,.22); display:flex; gap:12px; align-items:center; }
+  .hero-panel .card-float.tl { top:18px; left:-6px; }
+  .hero-panel .card-float.br { bottom:24px; right:-8px; }
+  .hero-panel .card-float .ico { width:42px; height:42px; border-radius:11px; background:var(--teal-soft); color:var(--teal); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .hero-panel .card-float .ico svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:2; }
+  .hero-panel .card-float .lbl { font-size:12px; color:var(--muted); font-weight:500; }
+  .hero-panel .card-float .val { font-size:20px; color:var(--primary); font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; }
+  .hero-panel .pulse { position:absolute; width:140px; height:140px; border-radius:50%; background:linear-gradient(135deg, var(--primary), var(--primary-light)); display:flex; align-items:center; justify-content:center; box-shadow:0 24px 60px rgba(15,43,76,.4); }
+  .hero-panel .pulse svg { width:60px; height:60px; stroke:#fff; fill:none; stroke-width:2.4; }
+  .hero-panel .pulse::after { content:""; position:absolute; inset:-12px; border-radius:50%; border:2px solid rgba(255,255,255,.5); animation:pulse 2.4s ease-out infinite; }
+  @keyframes pulse { 0% { transform:scale(1); opacity:.7; } 100% { transform:scale(1.6); opacity:0; } }
+
+  /* ===== secciones ===== */
+  section { padding:80px 0 8px; scroll-margin-top:80px; }
+  .section-head { text-align:center; max-width:780px; margin:0 auto 48px; }
+  .section-eyebrow { display:inline-block; color:var(--primary-light); font-weight:600; font-size:13px; letter-spacing:.18em; text-transform:uppercase; margin:0 0 14px; }
+  h2 { font-size:clamp(28px, 3.6vw, 40px); margin:0 0 14px; line-height:1.18; letter-spacing:-.02em; font-weight:800; color:var(--primary); }
+  .section-sub { color:var(--muted); font-size:17px; line-height:1.65; margin:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:30px 32px; margin-bottom:20px; box-shadow:0 4px 24px rgba(15,43,76,.05); }
+  .card.elev { box-shadow:0 12px 40px rgba(15,43,76,.08); }
+  .rejilla3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; }
+  .rejilla2 { display:grid; grid-template-columns:repeat(2, 1fr); gap:24px; }
+  .tarjetas { display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; margin-bottom:20px; }
+  .tarjetas .card { margin:0; }
+
+  /* ===== chips y controles ===== */
+  .control label, .control .etq { display:block; color:var(--muted); margin:0 0 10px; font-size:14px; font-weight:500; }
+  .control label b, .control .etq b { color:var(--primary); font-weight:700; }
+  .rango-obs { font-size:13px; color:var(--muted); margin:8px 0 0; }
+  input[type=number] { width:100%; font:inherit; font-size:18px; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; color:var(--primary); background:#fff; font-variant-numeric:tabular-nums; transition:all .2s; }
+  input[type=number]:focus { outline:none; border-color:var(--primary-light); box-shadow:0 0 0 4px rgba(46,107,168,.12); }
+  input[type=number].fuera { border-color:var(--rojo); background:var(--rojo-soft); }
+  input[type=range] { width:100%; -webkit-appearance:none; appearance:none; background:transparent; height:28px; margin:8px 0 0; }
+  input[type=range]::-webkit-slider-runnable-track { height:9px; border-radius:5px; background:var(--pista, #E2E8F0); border:1px solid #D5DBE5; }
+  input[type=range]::-moz-range-track { height:9px; border-radius:5px; background:var(--pista, #E2E8F0); border:1px solid #D5DBE5; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:24px; height:24px; margin-top:-8px; border-radius:50%; background:var(--primary); border:3px solid #fff; cursor:pointer; box-shadow:0 3px 10px rgba(15,43,76,.3); }
+  input[type=range]::-moz-range-thumb { width:24px; height:24px; border-radius:50%; background:var(--primary); border:3px solid #fff; cursor:pointer; box-shadow:0 3px 10px rgba(15,43,76,.3); }
+  input[type=range].fuera::-webkit-slider-thumb { background:var(--rojo); }
+  input[type=range].fuera::-moz-range-thumb { background:var(--rojo); }
+  input[type=range]:focus-visible { outline:2px solid var(--primary-light); outline-offset:3px; border-radius:6px; }
+  .boton-texto { font:inherit; font-size:14px; color:var(--primary-light); background:none; border:0; padding:0; margin-top:10px; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  .chips { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 24px; }
+  .chips button { font:inherit; font-size:14px; color:var(--primary); background:var(--sky-bg); border:1px solid var(--line); border-radius:999px; padding:8px 18px; cursor:pointer; font-weight:500; transition:all .2s; }
+  .chips button:hover { border-color:var(--primary-light); color:var(--primary); background:#fff; box-shadow:0 3px 12px rgba(15,43,76,.08); }
+  .chips button.activo { background:var(--primary); color:#fff; border-color:var(--primary); box-shadow:0 6px 18px rgba(15,43,76,.25); }
+
+  /* ===== resultado / escenarios ===== */
+  .resultado-card { border:1px solid var(--line); border-top:5px solid var(--primary); border-radius:14px; padding:26px 28px; background:linear-gradient(180deg, #fff 0%, var(--sky-bg) 200%); }
+  .resultado-card h3, .escenario h3 { font-size:18px; font-weight:600; color:var(--muted); margin:0 0 12px; line-height:1.35; }
+  .grande { font-size:48px; font-weight:800; line-height:1.1; margin:0 0 12px; font-variant-numeric:tabular-nums; color:var(--primary); letter-spacing:-.02em; }
+  .grande.sube { color:var(--verde); }
+  .grande.baja { color:var(--rojo); }
+  .grande.neutro { color:var(--primary); }
+  .grande.dudoso { color:var(--ambar); }
+  .resultado-card p, .escenario p { color:var(--muted); margin:0 0 8px; font-size:15px; }
+  .resultado-card p b, .escenario p b { color:var(--primary); }
+  .escenario { border:1px solid var(--line); border-radius:14px; padding:26px 28px; border-top:5px solid var(--line); background:#fff; box-shadow:0 4px 20px rgba(15,43,76,.04); }
+  .escenario.actual { border-top-color:var(--primary); }
+  .escenario.alternativo { border-top-color:var(--primary-light); }
+  .escenario.balance { border-top-color:var(--verde); }
+
+  /* ===== avisos ===== */
+  .aviso { display:none; border-left:5px solid var(--ambar); background:var(--ambar-soft); border-radius:6px 14px 14px 6px; padding:15px 22px; margin:16px 0 0; font-size:15px; }
+  .aviso.visible { display:block; }
+  .aviso.rojo { border-left-color:var(--rojo); background:var(--rojo-soft); }
+  .aviso b { color:var(--primary); }
+  .nota-azul { border-left:5px solid var(--primary-light); background:var(--sky-bg); border-radius:6px 14px 14px 6px; padding:16px 24px; margin:22px 0 0; font-size:15px; color:var(--body); }
+  .nota-azul b { color:var(--primary); }
+
+  /* ===== estimador layout ===== */
+  .estimador { display:grid; grid-template-columns:1fr 1fr 1fr; gap:28px; align-items:start; }
+  .formula { color:var(--muted); margin:22px 0 14px; overflow-wrap:anywhere; font-size:15px; line-height:1.8; padding:16px 20px; background:var(--sky-bg); border-radius:12px; border:1px solid var(--sky-3); }
+  .formula b { color:var(--primary); }
+  table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; margin-top:8px; }
+  th { background:var(--tabla); color:#fff; text-align:left; font-weight:600; padding:13px 18px; font-size:14px; }
+  th:first-child { border-radius:8px 0 0 0; }
+  th:last-child { border-radius:0 8px 0 0; }
+  td { padding:13px 18px; border-bottom:1px solid var(--line); vertical-align:top; font-size:15px; }
+  tr:last-child td { border-bottom:0; }
+  tr:last-child td:first-child { border-radius:0 0 0 8px; }
+  tr:last-child td:last-child { border-radius:0 0 8px 0; }
+
+  /* ===== stats grid ===== */
+  .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; margin:20px 0 0; }
+  .stat { background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px 24px; box-shadow:0 4px 16px rgba(15,43,76,.04); transition:transform .2s, box-shadow .2s; }
+  .stat:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(15,43,76,.08); }
+  .stat .etq { color:var(--muted); font-size:13px; margin:0 0 8px; display:block; font-weight:500; }
+  .stat b { font-size:26px; font-weight:800; color:var(--primary); display:block; font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+  .stat small { color:var(--muted); font-size:12px; display:block; margin-top:6px; }
+
+  /* ===== gráfico ===== */
+  .grafico svg { width:100%; height:auto; display:block; }
+  .grafico text { font-family:inherit; font-size:13px; fill:var(--muted); }
+  .pie { color:var(--muted); margin:14px 0 0; font-size:15px; line-height:1.6; }
+
+  /* ===== coeficientes ===== */
+  .coef td.coef-nombre { font-weight:600; color:var(--primary); }
+  .coef td.coef-valor { font-variant-numeric:tabular-nums; font-weight:700; color:var(--primary-light); }
+
+  /* ===== limitaciones ===== */
+  ul.limites { margin:0; padding-left:22px; }
+  ul.limites li { margin:0 0 16px; color:var(--body); line-height:1.7; font-size:15.5px; }
+  ul.limites li:last-child { margin:0; }
+  ul.limites li b { color:var(--primary); }
+
+  /* ===== CTA final ===== */
+  .cta-final { background:linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color:#fff; border-radius:24px; padding:56px 48px; text-align:center; margin:60px 0 24px; position:relative; overflow:hidden; box-shadow:0 20px 60px rgba(15,43,76,.25); }
+  .cta-final::before { content:""; position:absolute; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.1) 0%, rgba(255,255,255,0) 70%); top:-100px; right:-80px; }
+  .cta-final h2 { color:#fff; margin:0 0 14px; }
+  .cta-final p { color:rgba(255,255,255,.9); font-size:17px; max-width:600px; margin:0 auto 28px; line-height:1.6; }
+
+  /* ===== footer ===== */
+  footer { color:var(--muted); font-size:14.5px; padding:48px 0 56px; border-top:1px solid var(--line); margin-top:40px; background:#fff; }
+  footer p { margin:0 0 8px; line-height:1.6; }
+  footer .envoltura { display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:36px; align-items:start; }
+  footer .col h4 { color:var(--primary); font-size:15px; font-weight:700; margin:0 0 14px; }
+  footer .col p, footer .col a { display:block; color:var(--muted); font-size:14px; margin:0 0 8px; }
+  footer .col a:hover { color:var(--primary); }
+  footer .brand-mark { margin-bottom:14px; }
+
+  /* ===== responsive ===== */
+  @media (max-width: 980px) {
+    .hero .envoltura { grid-template-columns:1fr; }
+    .hero-panel { height:320px; margin-top:24px; }
+    .rejilla3, .tarjetas, .estimador, .stats { grid-template-columns:1fr; }
+    .rejilla2 { grid-template-columns:1fr; }
+    .nav { display:none; }
+    footer .envoltura { grid-template-columns:1fr; }
+  }
+  @media (max-width: 640px) {
+    .envoltura { padding:0 20px; }
+    body { font-size:15px; }
+    .card { padding:20px 18px; border-radius:14px; }
+    .grande { font-size:38px; }
+    th, td { padding:10px 12px; font-size:13px; }
+    .stats { grid-template-columns:repeat(2, 1fr); }
+    .cta-final { padding:40px 24px; border-radius:18px; }
+    section { padding:56px 0 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== top bar ===== -->
+<div class="topbar">
+  <div class="envoltura">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg>
+      </span>
+      EstanciaClínica
+    </div>
+    <nav class="nav" aria-label="principal">
+      <a href="#estimador">Estimador</a>
+      <a href="#grafico">Cómo cambia</a>
+      <a href="#simulador">Costo-beneficio</a>
+      <a href="#limites">Limitaciones</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn-primary" href="#estimador">Calcular estancia</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== hero ===== -->
+<header class="hero">
+  <div class="envoltura">
+    <div>
+      <span class="hero-badge">
+        <span class="dot"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+        Modelo lineal · Clínica de rehabilitación
+      </span>
+      <h1>¿Cuántos días podría permanecer <span class="accent">hospitalizado</span> un paciente?</h1>
+      <p class="lead">Estimador basado en los registros de pacientes y en el modelo de regresión cargado desde <code>datos.js</code>. Mueva las sesiones de fisioterapia por semana y la severidad al ingreso, y la página recalcula la estancia, los intervalos y el costo de la hospitalización.</p>
+      <div class="hero-cta">
+        <a class="btn-hero" href="#estimador">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          Estimar paciente
+        </a>
+        <a class="btn-ghost" href="#simulador">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+          Ver simulador
+        </a>
+      </div>
+    </div>
+    <div class="hero-panel" aria-hidden="true">
+      <div class="blob"></div>
+      <div class="ring r1"></div>
+      <div class="ring r2"></div>
+      <div class="pulse">
+        <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div class="card-float tl">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg></div>
+        <div>
+          <div class="lbl">Modelo cargado</div>
+          <div class="val">R² · 0.00</div>
+        </div>
+      </div>
+      <div class="card-float br">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <div>
+          <div class="lbl">Estancia típica</div>
+          <div class="val">— días</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="envoltura">
+
+  <!-- 1 · estimador -->
+  <section id="estimador">
+    <div class="section-head">
+      <span class="section-eyebrow">Paso 1</span>
+      <h2>Estime un paciente cualquiera</h2>
+      <p class="section-sub">Elija un perfil o mueva los controles. El modelo estima cualquier combinación, y le avisa cuando se sale de lo observado en la base de pacientes.</p>
+    </div>
+
+    <div class="card elev">
+      <div class="chips" id="chips" aria-label="Perfiles de ejemplo"></div>
+      <div class="estimador">
+        <div class="control" id="c0"></div>
+        <div class="control" id="c1"></div>
+        <div class="resultado-card">
+          <h3>Estancia hospitalaria estimada</h3>
+          <p class="grande" id="estimacion">— días</p>
+          <p id="explicacion">Ingrese los dos valores para calcular la estancia.</p>
+        </div>
+      </div>
+
+      <p class="formula" id="formula">La ecuación se cargará desde el modelo generado en el cuaderno.</p>
+      <div class="aviso rojo" id="alerta" role="alert"></div>
+      <div class="aviso" id="alerta2" role="alert"></div>
+
+      <table>
+        <thead><tr><th>Qué se estima</th><th>Valor</th><th>Intervalo 95 %</th><th>Cómo se lee</th></tr></thead>
+        <tbody>
+          <tr><td>Promedio de pacientes así</td><td id="v1">—</td><td id="ic_media">—</td><td>El promedio de <b>todos</b> los pacientes con ese perfil</td></tr>
+          <tr><td>Este paciente en particular</td><td id="v2">—</td><td id="ic_paciente">—</td><td>Dónde caería <b>ese</b> paciente al final de la hospitalización</td></tr>
+          <!-- las filas de rangos se generan dinámicamente según M.variables -->
+        </tbody>
+      </table>
+      <div class="nota-azul">El intervalo del <b>promedio</b> es estrecho porque promedia a muchos pacientes; el de <b>un</b> paciente es ancho porque además tiene que cargar con lo que varía cada persona. En consultas individuales use el segundo; para decisiones sobre el servicio, el primero.</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="etq">R² del modelo</span><b id="r2">—</b><small>Variación explicada</small></div>
+      <div class="stat"><span class="etq">R² ajustado</span><b id="r2a">—</b><small>Ajustado por variables</small></div>
+      <div class="stat"><span class="etq">Error típico</span><b id="error">—</b><small>En días</small></div>
+      <div class="stat"><span class="etq">Pacientes en la base</span><b id="n_pac">—</b><small>Registros del cuaderno</small></div>
+    </div>
+  </section>
+
+  <!-- 2 · gráfico -->
+  <section id="grafico">
+    <div class="section-head">
+      <span class="section-eyebrow">Paso 2</span>
+      <h2>Cómo cambia la estancia con cada variable</h2>
+      <p class="section-sub">Cada recta muestra la estimación para pacientes que entran con un nivel de severidad distinto. El círculo naranja es el paciente de la sección 1.</p>
+    </div>
+
+    <div class="card grafico">
+      <svg id="svg" role="img" aria-label="Días estimados contra sesiones de fisioterapia, con las rectas del modelo para tres niveles de severidad"></svg>
+      <p class="pie" id="pie">—</p>
+    </div>
+
+    <div class="rejilla2">
+      <div class="card">
+        <h3 style="font-size:18px; font-weight:600; color:var(--muted); margin:0 0 14px;">Ecuación del modelo</h3>
+        <p id="ec_multiple" style="font-size:19px; font-weight:600; margin:0 0 12px; overflow-wrap:anywhere; color:var(--primary); line-height:1.45;">—</p>
+        <p style="color:var(--muted); margin:0; font-size:15px;" id="sub_multiple">—</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:18px; font-weight:600; color:var(--muted); margin:0 0 14px;">Coeficientes del modelo</h3>
+        <table class="coef">
+          <thead><tr><th>Coeficiente</th><th>Valor</th><th>Intervalo 95 %</th></tr></thead>
+          <tbody>
+            <!-- las filas se generan dinámicamente según M.b y M.se -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · simulador -->
+  <section id="simulador">
+    <div class="section-head">
+      <span class="section-eyebrow">Paso 3</span>
+      <h2>¿Vale la pena una sesión más?</h2>
+      <p class="section-sub">Tome el paciente de la sección 1 y simule qué pasaría si se le programan más (o menos) sesiones de fisioterapia. Ponga el costo de un día de hospitalización y de una sesión para ver el balance neto.</p>
+    </div>
+
+    <div class="card">
+      <div class="rejilla3">
+        <div class="control">
+          <label for="delta">Sesiones adicionales por semana <b id="delta_txt">—</b></label>
+          <input type="range" id="delta" min="-5" max="5" step="0.5" value="1">
+          <p class="rango-obs">Positivo: más sesiones de las que tenía el paciente. Negativo: menos.</p>
+        </div>
+        <div class="control">
+          <label for="costo_dia">Costo de un <b>día de hospitalización</b> (supuesto, cámbielo)</label>
+          <input type="number" id="costo_dia" value="350000" min="0" step="10000" inputmode="numeric">
+        </div>
+        <div class="control">
+          <label for="costo_sesion">Costo de una <b>sesión de fisioterapia</b> (supuesto, cámbielo)</label>
+          <input type="number" id="costo_sesion" value="45000" min="0" step="5000" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+
+    <div class="tarjetas">
+      <div class="card escenario actual">
+        <h3>Con el plan actual del paciente</h3>
+        <p class="grande neutro" id="dias_actual">—</p>
+        <p>de hospitalización estimada, para <b id="perfil_actual">—</b>.</p>
+        <p>Costo hospitalización: <b id="costo_actual">—</b>.</p>
+      </div>
+      <div class="card escenario alternativo">
+        <h3>Con el plan modificado</h3>
+        <p class="grande neutro" id="dias_alt">—</p>
+        <p>de hospitalización estimada, para <b id="perfil_alt">—</b>.</p>
+        <p>Costo total (hospitalización <span id="lbl_sesiones_extra">+ sesiones extra</span>): <b id="costo_alt">—</b>.</p>
+      </div>
+      <div class="card escenario balance">
+        <h3>Balance de la decisión</h3>
+        <p class="grande" id="balance_dias">—</p>
+        <p id="balance_txt">—</p>
+      </div>
+    </div>
+
+    <div class="aviso" id="aviso_simulador" role="status"></div>
+  </section>
+
+  <!-- 4 · límites -->
+  <section id="limites">
+    <div class="section-head">
+      <span class="section-eyebrow">Paso 4</span>
+      <h2>Lo que este modelo no puede decir</h2>
+      <p class="section-sub">Todo modelo tiene límites. Estos son los que más importan a la hora de interpretar el estimador.</p>
+    </div>
+    <div class="card">
+      <ul class="limites" id="limites"></ul>
+    </div>
+  </section>
+
+  <!-- CTA final -->
+  <div class="cta-final">
+    <h2>Use este estimador con criterio</h2>
+    <p>Es una herramienta de conversación con el paciente y su familia, no una predicción exacta. Para evaluar el efecto real de modificar las sesiones, lo ideal es un estudio con asignación controlada.</p>
+    <a class="btn-hero" href="#estimador" style="background:#fff; color:var(--primary); box-shadow:0 8px 24px rgba(0,0,0,.18);">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      Volver al estimador
+    </a>
+  </div>
+</main>
+
+<script src="datos.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const fmt = (x, d = 2) => Number(x).toLocaleString('es-CO', { minimumFractionDigits:d, maximumFractionDigits:d });
+  const conSigno = (x, d = 2) => (x > 0 ? '+' : x < 0 ? '−' : '') + fmt(Math.abs(x), d);
+  const pesos = x => '$' + Math.round(x).toLocaleString('es-CO');
+  const numero = el => parseFloat(String(el.value).replace(',', '.'));
+  const M = window.MODELO;
+
+  /* ---------- manejo de errores ---------- */
+  if (!M) {
+    const aviso = $('alerta');
+    aviso.innerHTML = '<b>No se encontró datos.js.</b> Ejecute la última celda del cuaderno y guarde <code>datos.js</code> en la misma carpeta que <code>index.html</code>.';
+    aviso.classList.add('visible');
+    document.querySelectorAll('button, input').forEach(el => { if (el.id !== 'costo_dia' && el.id !== 'costo_sesion' && el.id !== 'delta') el.disabled = true; });
+    return;
+  }
+
+  // Variables: cualquier cantidad (2, 3, ...). El estimador se ajusta solo.
+  const VARS = M.variables;
+  if (VARS.length < 2) {
+    const aviso = $('alerta');
+    aviso.innerHTML = '<b>El archivo datos.js no trae suficientes variables.</b> Se esperan al menos dos variables explicativas (por ejemplo, sesiones y severidad).';
+    aviso.classList.add('visible');
+    return;
+  }
+
+  const med = M.medianas || {};
+  // mediana observada o, si falta, el punto medio del rango
+  VARS.forEach(v => { if (med[v.nombre] == null) med[v.nombre] = (v.min + v.max) / 2; });
+  const b = M.b;
+  const k = VARS.length;            // nº de variables explicativas
+  const kAll = k + 1;               // +1 por el intercepto
+
+  // Diccionario de etiquetas legibles por nombre de variable.
+  // Si una variable no está aquí, se genera una etiqueta a partir del nombre.
+  const etiquetasPorNombre = {
+    'sesiones_fisioterapia_semana': { texto: 'Sesiones de fisioterapia', unidad: 'por semana',  dominioExtra: 2 },
+    'severidad_ingreso':            { texto: 'Severidad al ingreso',     unidad: 'puntos',      dominioExtra: 5 },
+    'edad_anios':                   { texto: 'Edad',                     unidad: 'años',        dominioExtra: 5 },
+    'num_comorbilidades':           { texto: 'Comorbilidades',           unidad: 'nº de diagnósticos', dominioExtra: 1 }
+  };
+  const etiquetaDe = v => etiquetasPorNombre[v.nombre] || {
+    texto: v.nombre.replace(/_/g, ' '),
+    unidad: '',
+    dominioExtra: Math.max(1, (v.max - v.min) * 0.1)
+  };
+  const etiquetas = VARS.map(v => {
+    const e = etiquetaDe(v);
+    return { ...e, dominio: [Math.max(0, v.min - e.dominioExtra), v.max + e.dominioExtra] };
+  });
+
+  // Perfiles: cada perfil fija un valor para CADA variable por nombre.
+  // Las variables que no se mencionan en el perfil toman la mediana.
+  // (Así, los mismos perfiles funcionan con 2 o con 3+ variables.)
+  const perfilValor = (perfil, v) => perfil.valores[v.nombre] ?? med[v.nombre];
+  const perfiles = [
+    { t: 'Paciente típico', valores: {} },
+    { t: 'Caso grave',
+      valores: { 'sesiones_fisioterapia_semana': v => v.min, 'severidad_ingreso': v => v.max } },
+    { t: 'Caso leve',
+      valores: { 'sesiones_fisioterapia_semana': v => v.max, 'severidad_ingreso': v => v.min } },
+    { t: 'Mucho tratamiento',
+      valores: { 'sesiones_fisioterapia_semana': v => v.max } },
+    { t: 'Poco tratamiento',
+      valores: { 'sesiones_fisioterapia_semana': v => v.min } }
+  ];
+  // resolver funciones en valores concretos
+  perfiles.forEach(p => {
+    const resueltos = {};
+    VARS.forEach(v => {
+      const raw = p.valores[v.nombre];
+      resueltos[v.nombre] = typeof raw === 'function' ? raw(v) : (raw ?? med[v.nombre]);
+    });
+    p.valores = resueltos;
+  });
+
+  /* ---------- helpers genéricos para N variables ---------- */
+  // x = [1, x1, x2, ..., xk]; estimación = x · b
+  const estimarVec = x => { let y = 0; for (let i = 0; i < x.length; i++) y += x[i] * b[i]; return y; };
+  const palanca = x => {
+    let q = 0;
+    for (let i = 0; i < kAll; i++)
+      for (let j = 0; j < kAll; j++)
+        q += x[i] * M.inv[i][j] * x[j];
+    return q;
+  };
+
+  /* ---------- stats globales + hero ---------- */
+  $('r2').textContent  = fmt(M.r2 * 100, 1) + ' %';
+  $('r2a').textContent = fmt(M.r2a * 100, 1) + ' %';
+  $('error').textContent = fmt(M.s) + ' días';
+  $('n_pac').textContent = M.n ?? '—';
+
+  // tabla de rangos: una fila por variable, generada dinámicamente
+  (function () {
+    const tbody = document.querySelector('#estimador table tbody');
+    // conservar las dos primeras filas (promedio / paciente) y reemplazar el resto
+    const filasInicio = Array.from(tbody.querySelectorAll('tr')).slice(0, 2);
+    tbody.innerHTML = '';
+    filasInicio.forEach(tr => tbody.appendChild(tr));
+    VARS.forEach(v => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>Rango de ' + etiquetaDe(v).texto.toLowerCase() + ' observado</td>' +
+                     '<td>' + fmt(v.min) + ' a ' + fmt(v.max) + '</td>' +
+                     '<td>—</td>' +
+                     '<td>Valores en los que el modelo es confiable</td>';
+      tbody.appendChild(tr);
+    });
+  })();
+
+  // tarjetas flotantes del hero
+  document.querySelectorAll('.hero-panel .card-float.tl .val')[0].textContent = 'R² · ' + fmt(M.r2, 2);
+  // yhat con todas las variables en su mediana
+  const xMed = [1, ...VARS.map(v => med[v.nombre])];
+  const medianaYhat = estimarVec(xMed);
+  document.querySelectorAll('.hero-panel .card-float.br .val')[0].textContent = fmt(medianaYhat, 1) + ' días';
+
+  /* ---------- ecuación y coeficientes ---------- */
+  // fórmula legible
+  const partes = [fmt(b[0], 2)];
+  VARS.forEach((v, i) => {
+    const coef = b[i + 1];
+    partes.push((coef >= 0 ? ' + ' : ' − ') + fmt(Math.abs(coef), 3) + ' × ' + etiquetaDe(v).texto.toLowerCase());
+  });
+  $('formula').innerHTML = '<b>De dónde sale:</b> estancia = ' + partes.join('') + '.';
+  // ecuación compacta para la tarjeta
+  const partesC = [fmt(b[0], 2)];
+  VARS.forEach((v, i) => {
+    const coef = b[i + 1];
+    partesC.push((coef >= 0 ? ' + ' : ' − ') + fmt(Math.abs(coef), 3) + ' · ' + etiquetaDe(v).texto.toLowerCase());
+  });
+  $('ec_multiple').textContent = 'días = ' + partesC.join('');
+  // sub-multiple: lectura de cada coeficiente
+  const lecturas = VARS.map((v, i) => {
+    const coef = b[i + 1];
+    const etq = etiquetaDe(v).texto.toLowerCase();
+    return coef < 0
+      ? 'Cada unidad más de ' + etq + ' se asocia con <b>' + fmt(Math.abs(coef), 2) + ' días menos</b> de estancia.'
+      : 'Cada unidad más de ' + etq + ' se asocia con <b>' + fmt(coef, 2) + ' días más</b> de estancia.';
+  });
+  $('sub_multiple').innerHTML = 'R² = ' + fmt(M.r2, 3) + ' (ajustado ' + fmt(M.r2a, 3) + '). ' + lecturas.join(' ');
+
+  const se = M.se;
+  const t = M.t;
+  // tabla de coeficientes: generada dinámicamente para k+1 filas
+  (function () {
+    const tbody = document.querySelector('#grafico .coef tbody');
+    tbody.innerHTML = '';
+    const nombres = ['Intercepto', ...VARS.map(v => etiquetaDe(v).texto)];
+    for (let i = 0; i < kAll; i++) {
+      const tr = document.createElement('tr');
+      const val = b[i];
+      let ic = '—';
+      if (se && se[i] != null && t) {
+        ic = '[' + fmt(val - t * se[i], 3) + ' ; ' + fmt(val + t * se[i], 3) + ']';
+      }
+      tr.innerHTML = '<td class="coef-nombre">' + nombres[i] + '</td>' +
+                     '<td class="coef-valor">' + fmt(val, 3) + '</td>' +
+                     '<td>' + ic + '</td>';
+      tbody.appendChild(tr);
+    }
+  })();
+
+  /* ---------- controles del estimador ---------- */
+  // un slider + input por variable. El contenedor .estimador ya tiene #c0, #c1;
+  // si hay más variables, se añaden dinámicamente.
+  const estimadorGrid = document.querySelector('.estimador');
+  for (let i = 2; i < k; i++) {
+    const div = document.createElement('div');
+    div.className = 'control';
+    div.id = 'c' + i;
+    estimadorGrid.insertBefore(div, estimadorGrid.lastElementChild); // antes de .resultado-card
+  }
+  VARS.forEach((v, i) => {
+    const e = etiquetas[i], [d0, d1] = e.dominio;
+    const pct = x => ((x - d0) / (d1 - d0) * 100).toFixed(1) + '%';
+    const inicial = med[v.nombre];
+    $('c' + i).innerHTML =
+      '<label for="x' + i + '">' + e.texto + ' · <b>' + e.unidad + '</b></label>' +
+      '<input type="number" id="x' + i + '" step="0.1" inputmode="decimal" value="' + inicial + '">' +
+      '<input type="range" id="r' + i + '" min="' + d0 + '" max="' + d1 + '" step="0.1" value="' + inicial + '" aria-label="' + e.texto + '">' +
+      '<p class="rango-obs">Observado: ' + fmt(v.min) + ' a ' + fmt(v.max) + ' (zona sombreada) · mediana ' + fmt(inicial) + '</p>';
+    $('r' + i).style.setProperty('--pista',
+      'linear-gradient(90deg, #E2E8F0 ' + pct(v.min) + ', #B6CFE4 ' + pct(v.min) + ', #B6CFE4 ' + pct(v.max) + ', #E2E8F0 ' + pct(v.max) + ')');
+    $('r' + i).addEventListener('input', ev => { $('x' + i).value = ev.target.value; estimador(); });
+    $('x' + i).addEventListener('input', ev => { const val = numero(ev.target); if (!isNaN(val)) $('r' + i).value = val; estimador(); });
+  });
+
+  /* ---------- chips de perfiles ---------- */
+  perfiles.forEach((p, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.textContent = p.t;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#chips button').forEach(b => b.classList.remove('activo'));
+      btn.classList.add('activo');
+      VARS.forEach((v, i) => {
+        const val = perfilValor(p, v);
+        $('x' + i).value = val; $('r' + i).value = val;
+      });
+      estimador();
+    });
+    $('chips').appendChild(btn);
+  });
+
+  /* ---------- estimador ---------- */
+  let perfil = null;
+
+  function estimador() {
+    const valores = [];
+    const fuera = [];
+    let incompleto = false;
+    VARS.forEach((v, i) => {
+      const val = numero($('x' + i));
+      if (isNaN(val)) { incompleto = true; return; }
+      valores.push(val);
+      const f = val < v.min || val > v.max;
+      $('x' + i).classList.toggle('fuera', f);
+      $('r' + i).classList.toggle('fuera', f);
+      if (f) fuera.push(etiquetas[i].texto.toLowerCase() + ' = ' + fmt(val) + ' (observado: ' + fmt(v.min) + ' a ' + fmt(v.max) + ')');
+    });
+    const alerta = $('alerta'), alerta2 = $('alerta2');
+    if (incompleto) {
+      ['estimacion', 'v1', 'v2', 'ic_media', 'ic_paciente'].forEach(id => $(id).textContent = '—');
+      $('explicacion').textContent = 'Escriba todos los valores para calcular la estancia.';
+      alerta.classList.remove('visible'); alerta2.classList.remove('visible');
+      perfil = null; dibujar(); simulador(); return;
+    }
+    const x = [1, ...valores];
+    const yhat = estimarVec(x);
+    const q = palanca(x);
+    const eMedia = M.t * M.s * Math.sqrt(Math.max(0, q));
+    const eObs   = M.t * M.s * Math.sqrt(1 + Math.max(0, q));
+    const imposible = yhat < 0 ? ' Además, la estimación (' + fmt(yhat) + ' días) es negativa: un tiempo de hospitalización así no existe.' : '';
+
+    if (fuera.length) {
+      alerta.innerHTML = '<b>⚠ Está estimando por fuera del rango de los datos:</b> ' + fuera.join('; ') +
+        '. El modelo no tiene información para esos valores y la cifra no es confiable; úsela solo como referencia.' + imposible;
+      alerta.classList.add('visible');
+    } else alerta.classList.remove('visible');
+    alerta2.classList.remove('visible');
+
+    $('estimacion').textContent = fmt(yhat) + ' días';
+    $('estimacion').className = 'grande' + (fuera.length > 0 ? ' dudoso' : '');
+    // resumen legible: lista de "etiqueta = valor"
+    const pares = VARS.map((v, i) => '<b>' + fmt(valores[i]) + '</b> ' + etiquetas[i].unidad);
+    $('explicacion').innerHTML = 'Para ' + pares.join(' · ') + '. Dato individual: entre ' + fmt(yhat - eObs) + ' y ' + fmt(yhat + eObs) + ' días.';
+    $('v1').textContent = $('v2').textContent = fmt(yhat, 2);
+    $('ic_media').textContent = '[' + fmt(yhat - eMedia, 2) + ' ; ' + fmt(yhat + eMedia, 2) + ']';
+    $('ic_paciente').textContent = '[' + fmt(yhat - eObs, 2) + ' ; ' + fmt(yhat + eObs, 2) + ']';
+    perfil = { valores, y: yhat, fuera: fuera.length > 0 };
+    dibujar();
+    simulador();
+  }
+
+  /* ---------- gráfico SVG ---------- */
+  // Eje X = primera variable. Color = segunda variable (3 niveles).
+  // Si hay más de 2 variables, las adicionales se fijan en su mediana y se muestra aviso.
+  const SVG = 'http://www.w3.org/2000/svg';
+  const vEjeX = VARS[0];
+  const vEjeY2 = VARS[1];
+  const vFijas = VARS.slice(2); // variables adicionales (vacío si k=2)
+  const niveles = [
+    { d: vEjeY2.min,        c: '#7FB0D9', lbl: etiquetaDe(vEjeY2).texto.toLowerCase() + ' baja (' + fmt(vEjeY2.min, 0) + ')' },
+    { d: med[vEjeY2.nombre], c: '#0F2B4C', lbl: etiquetaDe(vEjeY2).texto.toLowerCase() + ' media (' + fmt(med[vEjeY2.nombre], 0) + ')' },
+    { d: vEjeY2.max,        c: '#2E6BA8', lbl: etiquetaDe(vEjeY2).texto.toLowerCase() + ' alta (' + fmt(vEjeY2.max, 0) + ')' }
+  ];
+  // estimación con vEjeX = h, vEjeY2 = d, resto en su mediana
+  const estimarGraf = (h, d) => {
+    const x = [1];
+    x[1] = h;             // vEjeX
+    x[2] = d;             // vEjeY2
+    vFijas.forEach((v, idx) => { x[3 + idx] = med[v.nombre]; });
+    return estimarVec(x);
+  };
+  function dibujar() {
+    const svg = $('svg');
+    const W = Math.max(330, Math.min(1180, Math.round(svg.parentElement.clientWidth - 40)));
+    const Hh = W < 600 ? 360 : 440, mg = { l:54, r:W < 600 ? 12 : 180, t:18, b:54 };
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + Hh);
+    svg.innerHTML = '';
+    const x0 = Math.max(0, vEjeX.min - 1), x1 = vEjeX.max + 1;
+    let yMin = Infinity, yMax = -Infinity;
+    niveles.forEach(n => { yMin = Math.min(yMin, estimarGraf(x0, n.d), estimarGraf(x1, n.d)); yMax = Math.max(yMax, estimarGraf(x0, n.d), estimarGraf(x1, n.d)); });
+    yMin = Math.max(0, Math.floor(yMin - 1));
+    yMax = Math.ceil(yMax + 1);
+    const sx = v => mg.l + (v - x0) / (x1 - x0) * (W - mg.l - mg.r);
+    const sy = v => Hh - mg.b - (v - yMin) / (yMax - yMin) * (Hh - mg.t - mg.b);
+    const el = (tag, at, padre = svg) => { const e = document.createElementNS(SVG, tag); for (const k in at) e.setAttribute(k, at[k]); padre.appendChild(e); return e; };
+    const texto = (t, at) => { el('text', at).textContent = t; };
+
+    // zona observada (banda vertical de la variable en eje X)
+    el('rect', { x: sx(vEjeX.min), y: mg.t, width: sx(vEjeX.max) - sx(vEjeX.min), height: Hh - mg.t - mg.b, fill: '#2E6BA8', 'fill-opacity': 0.07 });
+    el('line', { x1: sx(vEjeX.min), x2: sx(vEjeX.min), y1: mg.t, y2: Hh - mg.b, stroke: '#2E6BA8', 'stroke-dasharray': '4 4', 'stroke-opacity': 0.5 });
+    el('line', { x1: sx(vEjeX.max), x2: sx(vEjeX.max), y1: mg.t, y2: Hh - mg.b, stroke: '#2E6BA8', 'stroke-dasharray': '4 4', 'stroke-opacity': 0.5 });
+
+    // grid Y
+    const pasoY = Math.max(1, Math.round((yMax - yMin) / 6));
+    for (let v = Math.ceil(yMin); v <= yMax; v += pasoY) {
+      el('line', { x1: mg.l, x2: W - mg.r, y1: sy(v), y2: sy(v), stroke: '#EDF2F7' });
+      texto(v, { x: mg.l - 10, y: sy(v) + 4, 'text-anchor': 'end' });
+    }
+    // grid X
+    const pasoX = Math.max(1, Math.round((x1 - x0) / 8));
+    for (let v = Math.ceil(x0); v <= x1; v += pasoX) texto(v, { x: sx(v), y: Hh - mg.b + 22, 'text-anchor': 'middle' });
+    el('line', { x1: mg.l, x2: mg.l, y1: mg.t, y2: Hh - mg.b, stroke: '#D5DBE5' });
+    el('line', { x1: mg.l, x2: W - mg.r, y1: Hh - mg.b, y2: Hh - mg.b, stroke: '#D5DBE5' });
+    texto(etiquetaDe(vEjeX).texto.toLowerCase() + ' (' + etiquetaDe(vEjeX).unidad + ')', { x: (mg.l + W - mg.r) / 2, y: Hh - 10, 'text-anchor': 'middle', style: 'font-size:14px;fill:#0F2B4C;font-weight:600' });
+    texto('días de hospitalización estimados', { x: 14, y: (mg.t + Hh - mg.b) / 2, 'text-anchor': 'middle', transform: 'rotate(-90 14 ' + (mg.t + Hh - mg.b) / 2 + ')', style: 'font-size:14px;fill:#0F2B4C;font-weight:600' });
+
+    // rectas del modelo para tres niveles de la segunda variable
+    niveles.forEach(n => {
+      el('line', { x1: sx(x0), y1: sy(estimarGraf(x0, n.d)), x2: sx(x1), y2: sy(estimarGraf(x1, n.d)), stroke: n.c, 'stroke-width': 3 });
+      texto(n.lbl, { x: W < 600 ? sx(x1) - 4 : sx(x1) + 8, y: sy(estimarGraf(x1, n.d)) + (W < 600 ? -6 : 4), 'text-anchor': W < 600 ? 'end' : 'start', style: 'fill:' + n.c + ';font-weight:600' });
+    });
+
+    // paciente actual (sólo se dibuja si el perfil existe)
+    if (perfil) {
+      const hPac = perfil.valores[0]; // primera variable = eje X
+      el('circle', { cx: sx(hPac), cy: sy(perfil.y), r: 10, fill: 'none', stroke: '#C9772B', 'stroke-width': 3.5 });
+      if (hPac >= x0 && hPac <= x1 && perfil.y >= yMin && perfil.y <= yMax) {
+        texto('su paciente', { x: sx(hPac) + 14, y: sy(perfil.y) - 10, style: 'fill:#C9772B;font-weight:700' });
+      }
+    }
+  }
+  window.addEventListener('resize', dibujar);
+  $('pie').innerHTML = 'Las tres rectas muestran la estimación para pacientes con <b>' + etiquetaDe(vEjeY2).texto.toLowerCase() + '</b> baja, media y alta. La banda sombreada marca el rango observado de <b>' + etiquetaDe(vEjeX).texto.toLowerCase() + '</b>: dentro de ella el modelo es confiable, fuera extrapola. El círculo naranja es el paciente de la sección 1.' +
+    (vFijas.length ? ' Las variables adicionales (' + vFijas.map(v => etiquetaDe(v).texto.toLowerCase()).join(', ') + ') se mantienen en su mediana para poder dibujar el gráfico en 2D.' : '');
+
+  /* ---------- simulador de impacto ---------- */
+  // El slider "delta" modifica la PRIMERA variable (sesiones de fisioterapia).
+  // El resto del perfil se mantiene igual.
+  function simulador() {
+    const delta = numero($('delta')) || 0;
+    const costoDia = numero($('costo_dia')) || 0;
+    const costoSesion = numero($('costo_sesion')) || 0;
+    $('delta_txt').textContent = conSigno(delta, 1) + ' sesiones/sem';
+
+    if (!perfil) {
+      ['dias_actual', 'dias_alt', 'balance_dias', 'costo_actual', 'costo_alt', 'perfil_actual', 'perfil_alt'].forEach(id => $(id).textContent = '—');
+      $('balance_txt').textContent = 'Configure un paciente en la sección 1.';
+      $('aviso_simulador').classList.remove('visible');
+      return;
+    }
+    // vector del paciente actual
+    const x0 = [1, ...perfil.valores];
+    const h0 = perfil.valores[0];            // primera variable = sesiones
+    const h1 = Math.max(0, h0 + delta);
+    const x1 = x0.slice(); x1[1] = h1;       // modificar sólo la primera variable
+    const y0 = estimarVec(x0);
+    const y1 = estimarVec(x1);
+
+    $('dias_actual').textContent = fmt(y0) + ' días';
+    $('dias_actual').className = 'grande neutro';
+    const perfilStr = VARS.map((v, i) => fmt(perfil.valores[i]) + ' ' + etiquetas[i].unidad).join(' · ');
+    $('perfil_actual').textContent = perfilStr;
+    $('costo_actual').textContent = pesos(y0 * costoDia);
+
+    $('dias_alt').textContent = fmt(y1) + ' días';
+    $('dias_alt').className = 'grande ' + (y1 < y0 ? 'sube' : y1 > y0 ? 'baja' : 'neutro');
+    const perfilAltStr = VARS.map((v, i) => fmt(i === 0 ? h1 : perfil.valores[i]) + ' ' + etiquetas[i].unidad).join(' · ');
+    $('perfil_alt').textContent = perfilAltStr;
+    const semanas = Math.max(1, y0 / 7);
+    const numSesionesExtra = Math.max(0, delta) * semanas;
+    const costoSesionesExtra = numSesionesExtra * costoSesion;
+    $('costo_alt').textContent = pesos(y1 * costoDia + costoSesionesExtra);
+    $('lbl_sesiones_extra').textContent = delta >= 0 ? '+ sesiones extra' : '(con menos sesiones)';
+
+    const difDias = y1 - y0;
+    const ahorroHospital = -difDias * costoDia;
+    const balance = ahorroHospital - costoSesionesExtra;
+
+    $('balance_dias').textContent = conSigno(-difDias, 2) + ' días';
+    $('balance_dias').className = 'grande ' + (-difDias > 0.05 ? 'sube' : -difDias < -0.05 ? 'baja' : 'neutro');
+
+    let txt;
+    if (delta === 0) {
+      txt = 'No hay cambios en el plan.';
+    } else if (delta > 0) {
+      txt = 'Agregar <b>' + fmt(delta, 1) + '</b> sesiones/semana se asocia con <b>' + fmt(Math.abs(difDias), 2) + ' días ' + (difDias < 0 ? 'menos' : 'más') + '</b> de hospitalización. ' +
+            (costoSesionesExtra > 0 ? 'Las sesiones extra cuestan <b>' + pesos(costoSesionesExtra) + '</b>. ' : '') +
+            (ahorroHospital > 0 ? 'Ahorro en hospitalización: <b>' + pesos(ahorroHospital) + '</b>. ' : '') +
+            'Balance neto: <b>' + pesos(balance) + '</b>.';
+    } else {
+      txt = 'Quitar <b>' + fmt(Math.abs(delta), 1) + '</b> sesiones/semana se asocia con <b>' + fmt(Math.abs(difDias), 2) + ' días ' + (difDias > 0 ? 'más' : 'menos') + '</b> de hospitalización. ' +
+            (ahorroHospital < 0 ? 'Costo adicional en hospitalización: <b>' + pesos(-ahorroHospital) + '</b>. ' : '') +
+            'Balance neto: <b>' + pesos(balance) + '</b>.';
+    }
+    $('balance_txt').innerHTML = txt;
+
+    const aviso = $('aviso_simulador');
+    if (h1 < vEjeX.min || h1 > vEjeX.max) {
+      aviso.innerHTML = '<b>Ojo:</b> con ' + fmt(h1) + ' sesiones/semana, el plan modificado está fuera del rango observado (' + fmt(vEjeX.min) + ' a ' + fmt(vEjeX.max) + '). La estimación es una extrapolación: tómela con cautela.';
+      aviso.classList.add('visible');
+    } else if (perfil.fuera) {
+      aviso.innerHTML = '<b>Ojo:</b> el paciente de la sección 1 ya está fuera del rango observado. Esta simulación hereda esa advertencia.';
+      aviso.classList.add('visible');
+    } else {
+      aviso.classList.remove('visible');
+    }
+  }
+  ['delta', 'costo_dia', 'costo_sesion'].forEach(id => $(id).addEventListener('input', simulador));
+
+  /* ---------- limitaciones ---------- */
+  const rangosTxt = VARS.map(v => etiquetaDe(v).texto.toLowerCase() + ' entre ' + fmt(v.min) + ' y ' + fmt(v.max)).join('; ');
+  $('limites').innerHTML = [
+    '<b>No prueba una causa.</b> Son datos observacionales: la cantidad de sesiones de fisioterapia no se asignó al azar. La asociación muestra que, en promedio, los pacientes con más sesiones tienen estancias distintas, pero no demuestra que cambiar las sesiones cause por sí solo ese cambio.',
+    '<b>Vale para ' + rangosTxt + '.</b> Fuera de esos rangos el modelo extrapola y el estimador lo advierte.',
+    '<b>Se equivoca, en promedio, unos ' + fmt(M.s) + ' días</b> para un paciente nuevo. Sirve para comparar perfiles y planificar capacidad, no para predecir con precisión la estancia de una persona.',
+    '<b>El R² es ' + fmt(M.r2 * 100, 1) + ' %</b>: esa es la fracción de la variación en los días de estancia que el modelo explica. El resto —el ' + fmt((1 - M.r2) * 100, 1) + ' %— depende de factores que no están en la base (complicaciones posoperatorias, motivación, apoyo familiar, etc.).',
+    '<b>Faltan variables.</b> ' + (k === 2 ? 'La severidad al ingreso resume el estado clínico, pero no captura la edad, el diagnóstico específico ni las comorbilidades. Si esas variables están correlacionadas con las sesiones, parte de lo que hoy se le atribuye a la fisioterapia podría ser de ellas.' : 'Aunque el modelo incluye varias variables, no captura el diagnóstico específico, las complicaciones posoperatorias ni la motivación del paciente. Si esas variables están correlacionadas con las sesiones, parte de lo que hoy se le atribuye a la fisioterapia podría ser de ellas.'),
+    '<b>La recomendación:</b> use este estimador como herramienta de conversación con el paciente y su familia, no como única guía para decidir el plan de tratamiento. Para evaluar el efecto real de modificar las sesiones, lo ideal es un estudio con asignación controlada.'
+  ].map(t => '<li>' + t + '</li>').join('');
+
+  /* ---------- arranque ---------- */
+  estimador();
+})();
+</script>
+</body>
+</html>
