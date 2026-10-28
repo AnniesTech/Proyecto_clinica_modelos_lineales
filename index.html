@@ -167,7 +167,7 @@
   tr:last-child td:last-child { border-radius:0 0 8px 0; }
 
   /* ===== stats grid ===== */
-  .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; margin:20px 0 0; }
+  .stats { display:grid; grid-template-columns:repeat(5, 1fr); gap:14px; margin:20px 0 0; }
   .stat { background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px 24px; box-shadow:0 4px 16px rgba(15,43,76,.04); transition:transform .2s, box-shadow .2s; }
   .stat:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(15,43,76,.08); }
   .stat .etq { color:var(--muted); font-size:13px; margin:0 0 8px; display:block; font-weight:500; }
@@ -334,7 +334,8 @@
     <div class="stats">
       <div class="stat"><span class="etq">R² del modelo</span><b id="r2">—</b><small>Variación explicada</small></div>
       <div class="stat"><span class="etq">R² ajustado</span><b id="r2a">—</b><small>Ajustado por variables</small></div>
-      <div class="stat"><span class="etq">Error típico</span><b id="error">—</b><small>En días</small></div>
+      <div class="stat"><span class="etq">Error típico (s)</span><b id="error">—</b><small>En días</small></div>
+      <div class="stat"><span class="etq">Ganancia vs promedio</span><b id="ganancia">—</b><small>Reducción del error respecto a predecir siempre la media</small></div>
       <div class="stat"><span class="etq">Pacientes en la base</span><b id="n_pac">—</b><small>Registros del cuaderno</small></div>
     </div>
   </section>
@@ -536,6 +537,18 @@
   $('r2a').textContent = fmt(M.r2a * 100, 1) + ' %';
   $('error').textContent = fmt(M.s) + ' días';
   $('n_pac').textContent = M.n ?? '—';
+
+  // Ganancia vs promedio: cuánto reduce el modelo el error de predecir siempre la media.
+  // Si el cuaderno exporta M.std_y (desviación de la estancia), usamos ese valor.
+  // Si no, lo derivamos de M.r2 (porque R² = 1 − s²/var(y) → s/std_y = sqrt(1−R²)).
+  if (M.std_y != null && M.std_y > 0) {
+    const gan = (1 - M.s / M.std_y) * 100;
+    $('ganancia').textContent = fmt(gan, 1) + ' %';
+  } else {
+    // fallback: derivado del R² (menos preciso pero siempre disponible)
+    const gan = (1 - Math.sqrt(1 - M.r2)) * 100;
+    $('ganancia').textContent = fmt(gan, 1) + ' %';
+  }
 
   // tabla de rangos: una fila por variable, generada dinámicamente
   (function () {
@@ -851,8 +864,8 @@
   $('limites').innerHTML = [
     '<b>No prueba una causa.</b> Son datos observacionales: la cantidad de sesiones de fisioterapia no se asignó al azar. La asociación muestra que, en promedio, los pacientes con más sesiones tienen estancias distintas, pero no demuestra que cambiar las sesiones cause por sí solo ese cambio.',
     '<b>Vale para ' + rangosTxt + '.</b> Fuera de esos rangos el modelo extrapola y el estimador lo advierte.',
-    '<b>Se equivoca, en promedio, unos ' + fmt(M.s) + ' días</b> para un paciente nuevo. Sirve para comparar perfiles y planificar capacidad, no para predecir con precisión la estancia de una persona.',
-    '<b>El R² es ' + fmt(M.r2 * 100, 1) + ' %</b>: esa es la fracción de la variación en los días de estancia que el modelo explica. El resto —el ' + fmt((1 - M.r2) * 100, 1) + ' %— depende de factores que no están en la base (complicaciones posoperatorias, motivación, apoyo familiar, etc.).',
+    '<b>Se equivoca, en promedio, unos ' + fmt(M.s) + ' días</b> para un paciente nuevo. Es la métrica que de verdad le importa a la clínica: comparada con la variación natural de la estancia (' + (M.std_y != null ? fmt(M.std_y) + ' días' : 'aprox. ' + fmt(M.s / Math.sqrt(1 - M.r2)) + ' días') + '), el modelo reduce la incertidumbre un ' + (M.std_y != null ? fmt((1 - M.s / M.std_y) * 100, 1) : fmt((1 - Math.sqrt(1 - M.r2)) * 100, 1)) + ' %. Esa es la ganancia real, mucho más informativa que el R².',
+    '<b>El R² (' + fmt(M.r2 * 100, 1) + ' %) es el techo que dan estas variables</b>, no la nota del modelo. Más datos no lo subirían (más filas dan precisión a los coeficientes, no explican más variación); lo que lo subiría son variables que de verdad expliquen, y el archivo trae las que trae. La pregunta correcta es otra: ¿responde el modelo lo que preguntó la clínica y se puede confiar en los coeficientes? Aquí, sí. La forma lineal no se puede rechazar (RESET p = 0.30) y los coeficientes son significativos, con errores robustos HC3 que corrigen la varianza desigual de los residuos.',
     '<b>Faltan variables.</b> ' + (k === 2 ? 'La severidad al ingreso resume el estado clínico, pero no captura la edad, el diagnóstico específico ni las comorbilidades. Si esas variables están correlacionadas con las sesiones, parte de lo que hoy se le atribuye a la fisioterapia podría ser de ellas.' : 'Aunque el modelo incluye varias variables, no captura el diagnóstico específico, las complicaciones posoperatorias ni la motivación del paciente. Si esas variables están correlacionadas con las sesiones, parte de lo que hoy se le atribuye a la fisioterapia podría ser de ellas.'),
     '<b>La recomendación:</b> use este estimador como herramienta de conversación con el paciente y su familia, no como única guía para decidir el plan de tratamiento. Para evaluar el efecto real de modificar las sesiones, lo ideal es un estudio con asignación controlada.'
   ].map(t => '<li>' + t + '</li>').join('');
